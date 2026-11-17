@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#090f20">
+  <meta name="description" content="自由搭配多色粒子圣诞树、自定义祝福与画布尺寸，导出5秒MP4视频并分享到Instagram Story。">
+  <title>把心意写进圣诞树 · Christmas Atelier</title>
+  <style>
+    :root { color-scheme: dark; --ink:#f6f7ff; --muted:#a6aec8; --line:rgba(214,222,255,.11); --surface:#10182c; --accent:#91daff; }
+    * { box-sizing:border-box; }
+    html { min-height:100%; background:#080e1c; }
+    body { margin:0; min-height:100vh; color:var(--ink); background:radial-gradient(ellipse at 78% 7%,#142445 0,transparent 47%),radial-gradient(ellipse at 8% 92%,#15213a 0,transparent 36%),#080e1c; font-family:Inter,"PingFang SC","Microsoft YaHei",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; -webkit-font-smoothing:antialiased; }
+    button,input,textarea,select { font:inherit; }
+    button { cursor:pointer; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline:2px solid #a2e1ff; outline-offset:3px; }
+    .app { max-width:1760px; padding:28px clamp(18px,3vw,52px) 36px; margin:auto; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; gap:15px; }
+    .brand { display:flex; gap:11px; align-items:center; text-decoration:none; color:#fff; font-weight:750; letter-spacing:.08em; font-size:12px; }
+    .brand-symbol { display:grid; place-items:center; width:32px; height:32px; border:1px solid #597b98; border-radius:10px; color:#c0eaff; font-size:18px; box-shadow:inset 0 0 15px #284b65a0; }
+    .topnote { color:#99a7c1; font-size:12px; letter-spacing:.06em; }
+    .workspace { display:grid; grid-template-columns:minmax(310px,360px) minmax(0,1fr); align-items:start; gap:clamp(20px,3.5vw,54px); }
+    .sidebar { padding-top:22px; }
+    .eyebrow { color:#95d9fb; font-size:11px; font-weight:750; letter-spacing:.21em; }
+    h1 { font-family:"Songti SC","Noto Serif CJK SC","SimSun",Georgia,serif; font-size:clamp(30px,2.6vw,43px); line-height:1.37; font-weight:600; letter-spacing:.045em; margin:15px 0 10px; }
+    .desc { color:#9ba7be; font-size:13px; line-height:1.85; margin:0 0 22px; }
+    .panel { background:linear-gradient(155deg,rgba(34,46,75,.76),rgba(17,26,47,.85)); border:1px solid var(--line); border-radius:20px; padding:19px 18px 18px; box-shadow:0 18px 50px #01040c36; }
+    .panel-section + .panel-section { border-top:1px solid var(--line); margin-top:19px; padding-top:19px; }
+    .section-header { display:flex; justify-content:space-between; align-items:center; gap:8px; margin:0 0 12px; }
+    .section-title { color:#e9efff; font-size:13px; font-weight:700; letter-spacing:.035em; }
+    .helper { font-size:11px; color:#8390b0; }
+    .presets { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+    .preset { min-width:0; position:relative; border:1px solid #52617d69; border-radius:12px; padding:9px 6px; background:#10182b8c; color:#c7d4e9; transition:background .2s,border-color .2s,transform .2s; }
+    .preset:hover { background:#23314c; transform:translateY(-1px); }
+    .preset[aria-pressed="true"] { border-color:#a4dcfa; background:#1b3049; color:#fff; box-shadow:0 0 0 1px #9edfff24 inset; }
+    .preset-swatch { height:18px; margin:0 auto 7px; display:flex; justify-content:center; }
+    .preset-swatch span { width:16px; height:16px; margin-left:-4px; border:2px solid #192036; border-radius:50%; box-shadow:0 0 8px #0003; }
+    .preset-swatch span:first-child { margin-left:0; }
+    .preset-name { display:block; font-size:11px; white-space:nowrap; }
+    .color-list { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .color-chip { display:flex; flex-direction:column; align-items:center; gap:6px; position:relative; }
+    .color-picker { position:relative; width:35px; height:35px; padding:3px; border-radius:50%; border:1px solid #9bacc760; background:#202e47; cursor:pointer; overflow:hidden; }
+    .color-picker input { position:absolute; width:52px; height:52px; border:0; left:-9px; top:-9px; padding:0; opacity:0; cursor:pointer; }
+    .color-picker .dot { display:block; height:100%; width:100%; border-radius:50%; border:2px solid #ffffff4a; pointer-events:none; }
+    .remove-color { position:absolute; top:-6px; right:-6px; border:0; border-radius:50%; height:17px; width:17px; display:grid; place-items:center; background:#3a4663; color:#fff; font-size:12px; padding:0; line-height:1; }
+    .chip-label { font-size:10px; color:#8e9cbb; }
+    .add-color { width:35px; height:35px; border:1px dashed #7990ad; background:#18263d; border-radius:50%; color:#d5e9ff; font-size:22px; font-weight:300; line-height:1; }
+    .add-color:disabled { opacity:.35; cursor:not-allowed; }
+    .advanced-grid { display:grid; grid-template-columns:1fr 1fr; gap:9px 13px; margin-top:16px; }
+
+    .design-grid { display:grid; grid-template-columns:1fr 1fr; gap:13px; }
+    .stack-field { display:flex; flex-direction:column; gap:6px; }
+    .slider-block { margin-top:13px; }
+    .slider-header { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px; }
+    .slider-header .field-label { margin-bottom:0; }
+    .mini-pill { color:#c9eaff; font-size:11px; font-variant-numeric:tabular-nums; }
+    .tiny-note { margin-top:10px; font-size:11px; line-height:1.7; color:#8fa2c1; }
+    .ornament-upload { margin-top:13px; padding:11px 12px; border:1px solid #516b8f5e; background:#0f1b31; border-radius:12px; }
+    .upload-row { display:flex; align-items:center; gap:10px; margin-top:8px; flex-wrap:wrap; }
+    .upload-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .upload-btn, .clear-btn { min-height:34px; border-radius:10px; border:1px solid #536985; background:#192a45; color:#e6f2ff; padding:0 12px; font-size:11px; font-weight:700; }
+    .clear-btn { background:#132238; }
+    .upload-thumb { width:46px; height:46px; border-radius:11px; border:1px solid #5e7fa362; background:linear-gradient(180deg,#16253f,#0c172b); display:grid; place-items:center; overflow:hidden; }
+    .upload-thumb img { width:100%; height:100%; object-fit:contain; display:block; }
+    .upload-thumb.empty::before { content:"挂件"; font-size:10px; color:#8ea6c5; letter-spacing:.08em; }
+    .upload-meta { min-width:0; display:flex; flex-direction:column; gap:3px; }
+    .upload-name { color:#e3efff; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:190px; }
+    .upload-note { color:#8598b8; font-size:10px; }
+    .color-row { display:flex; align-items:center; justify-content:space-between; gap:7px; font-size:11px; color:#b7c4db; min-height:26px; }
+    .mini-picker { width:24px; height:24px; border:1px solid #a5b6ce7e; background:transparent; border-radius:8px; padding:2px; cursor:pointer; }
+    .mini-picker::-webkit-color-swatch-wrapper { padding:0; }
+    .mini-picker::-webkit-color-swatch { border:0; border-radius:5px; }
+    .mini-picker::-moz-color-swatch { border:0; border-radius:5px; }
+    textarea { display:block; width:100%; resize:vertical; min-height:89px; max-height:190px; border-radius:12px; padding:12px 13px; background:#0b1528; border:1px solid #5266857a; color:#edf6ff; line-height:1.65; font-size:13px; }
+    textarea::placeholder { color:#6f819e; }
+    .under-textarea { display:flex; justify-content:space-between; margin:8px 0 13px; gap:12px; }
+    .checkbox-label { display:flex; align-items:center; gap:7px; color:#bbc9df; font-size:11px; cursor:pointer; }
+    input[type="checkbox"] { accent-color:#a4dcfa; }
+    .settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:13px; }
+    .field-label { display:block; margin-bottom:6px; color:#b1bed7; font-size:11px; }
+    .field-select { height:35px; width:100%; padding:0 9px; background:#101b30; border-radius:9px; border:1px solid #53627b7d; color:#eaf4ff; font-size:12px; }
+    .setting-color { display:flex; gap:9px; align-items:center; height:35px; }
+    .setting-color span { color:#c0cadd; font-size:11px; }
+    .range-row { display:flex; gap:12px; align-items:center; }
+    .range-row input { width:100%; accent-color:#a5e0ff; cursor:pointer; }
+    .value-pill { flex:0 0 auto; min-width:36px; color:#c9eaff; font-size:11px; text-align:right; font-variant-numeric:tabular-nums; }
+    .control-grid { display:flex; flex-wrap:wrap; gap:14px; }
+    .control-grid label { display:flex; align-items:center; gap:6px; font-size:11px; color:#c2d0e9; cursor:pointer; }
+    .actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:13px; }
+    .actions .full { grid-column:1 / -1; }
+    .export-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .size-preset { display:flex; align-items:center; justify-content:center; flex-direction:column; gap:3px; border:1px solid #52617d87; border-radius:10px; min-height:49px; padding:6px; background:#10182b8c; color:#d3e1fa; font-size:11px; cursor:pointer; }
+    .size-preset small { color:#91a5c3; font-size:10px; }
+    .size-preset[aria-pressed="true"] { border-color:#a4dcfa; background:#1d354d; box-shadow:0 0 0 1px #a4dcfa15 inset; }
+    .dimensions { display:grid; grid-template-columns:1fr auto 1fr; align-items:end; gap:9px; margin-top:13px; }
+    .number-field { width:100%; min-width:0; height:36px; padding:0 10px; color:#e9f3ff; background:#0b1528; border:1px solid #5266857a; border-radius:9px; font-size:12px; font-variant-numeric:tabular-nums; }
+    .dimension-cross { font-size:13px; padding-bottom:10px; color:#8ca3be; }
+    .output-hint { font-size:11px; color:#90a2c1; line-height:1.7; margin-top:11px; }
+    .record-progress { margin-top:13px; border-radius:12px; border:1px solid #63829b65; padding:10px 12px; background:#0d1c30; display:none; }
+    .record-progress.visible { display:block; }
+    .progress-header { display:flex; justify-content:space-between; font-size:11px; color:#d4eaff; margin-bottom:8px; }
+    .progress-track { height:5px; border-radius:999px; overflow:hidden; background:#324760; }
+    .progress-bar { height:100%; width:0%; background:linear-gradient(90deg,#73bfff,#d7eaff); transition:width .08s linear; }
+    .share-guide { padding:11px 12px; border:1px solid #4d739366; background:#12253c; border-radius:12px; margin-top:12px; font-size:11px; line-height:1.8; color:#bbd0e8; display:none; }
+    .share-guide.visible { display:block; }
+    .share-guide a { color:#b4e8ff; }
+    .btn:disabled { cursor:not-allowed; opacity:.5; transform:none!important; }
+    .safe-overlay { display:none; pointer-events:none; position:absolute; inset:0; z-index:2; }
+    .scene-shell.ig-safe .safe-overlay { display:block; }
+    .safe-top,.safe-bottom { position:absolute; left:0; right:0; background:#80a9c713; border-color:#c5defc80; border-style:dashed; color:#c4daf0b0; font-size:9px; font-weight:650; letter-spacing:.06em; text-align:center; }
+    .safe-top { top:0; height:14%; border-width:0 0 1px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:7px; }
+    .safe-bottom { bottom:0; height:20%; border-width:1px 0 0; padding-top:7px; }
+    .safe-note { display:flex; gap:9px; align-items:center; margin-top:10px; font-size:11px; color:#b8c6df; }
+    .btn { display:flex; align-items:center; justify-content:center; gap:8px; min-height:42px; border-radius:12px; font-weight:700; font-size:12px; border:1px solid #536985; transition:transform .2s,filter .2s,background .2s; }
+    .btn:hover { transform:translateY(-1px); }
+    .btn.primary { background:#b5e7ff; color:#122539; border-color:#b5e7ff; }
+    .btn.primary:hover { background:#d3f1ff; }
+    .btn.secondary { background:#1c2c46; color:#deecfd; }
+    .footnote { font-size:11px; color:#7083a1; line-height:1.8; margin:13px 5px 0; }
+    .scene-column { min-width:0; display:flex; flex-direction:column; align-items:center; }
+    .scene-toolbar { width:min(100%,calc((100dvh - 157px)*1.25),1000px); display:flex; justify-content:space-between; align-items:center; margin:1px 0 14px; gap:12px; }
+    .scene-kicker { display:flex; align-items:center; gap:8px; color:#9aa9c4; font-size:10px; font-weight:750; letter-spacing:.16em; }
+    .live-dot { width:6px; height:6px; display:inline-block; border-radius:50%; background:#a7e7ff; box-shadow:0 0 11px #a7e7ff; }
+    .scene-status { color:#8390ad; font-size:11px; }
+    .scene-shell { width:min(100%,calc((100dvh - 157px)*1.25),1000px); position:relative; aspect-ratio:5/4; border-radius:24px; overflow:hidden; background:#071123; border:1px solid #5c72913d; box-shadow:0 30px 85px #0008,0 0 0 5px #3b4b6410; isolation:isolate; }
+    canvas { display:block; width:100%; height:100%; }
+    .scene-shell:after { content:""; position:absolute; inset:0; border-radius:inherit; border:1px solid #ecf8ff12; pointer-events:none; }
+    .scene-label { position:absolute; top:22px; left:24px; color:#c7e7fbad; text-transform:uppercase; font-size:10px; letter-spacing:.22em; text-shadow:0 0 20px #000; pointer-events:none; }
+    .scene-fullscreen { position:absolute; top:16px; right:17px; border:1px solid #ffffff32; background:#11264292; color:#e2f2ff; width:35px; height:35px; border-radius:10px; display:grid; place-items:center; backdrop-filter:blur(10px); font-size:17px; }
+    .scene-fullscreen:hover { background:#2e5374b0; }
+    .preview-footer { width:min(100%,calc((100dvh - 157px)*1.25),1000px); margin-top:15px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; font-size:11px; color:#7787a3; }
+    .preview-footer strong { font-weight:550; color:#b0bed4; }
+    .scene-shell:fullscreen { width:100vw; height:100vh; aspect-ratio:auto; border-radius:0; border:none; display:flex; align-items:center; justify-content:center; }
+    .scene-shell:fullscreen canvas { width:100%; height:100%; object-fit:contain; }
+    .toast { position:fixed; z-index:100; bottom:25px; left:50%; transform:translate(-50%,10px); background:#e5f5ff; color:#173147; border-radius:999px; padding:11px 18px; box-shadow:0 10px 30px #0008; font-size:12px; font-weight:750; opacity:0; pointer-events:none; transition:opacity .2s,transform .2s; }
+    .toast.show { opacity:1; transform:translate(-50%,0); }
+    @media (max-width:1090px) { .workspace { grid-template-columns:minmax(295px,330px) minmax(0,1fr); gap:24px; } .app { padding:24px; } .sidebar { padding-top:5px; } h1 { font-size:32px; } .scene-shell,.scene-toolbar,.preview-footer { width:100%; } }
+    @media (max-width:760px) { .app { padding:17px 14px 28px; } .topbar { padding:0 4px; margin-bottom:17px; } .topnote { display:none; } .workspace { display:flex; flex-direction:column; gap:26px; } .scene-column { order:1; width:100%; } .sidebar { order:2; width:100%; max-width:550px; margin:0 auto; } .scene-toolbar { margin-bottom:10px; } .scene-shell { border-radius:15px; } .scene-label { font-size:8px; top:14px; left:15px; } .scene-fullscreen { top:10px; right:10px; width:31px; height:31px; } .preview-footer { font-size:10px; } h1 { font-size:33px; margin-top:8px; } .desc { margin-bottom:17px; } .panel { padding:18px 15px; } }
+    @media (prefers-reduced-motion:reduce) { .preset,.btn,.toast { transition:none; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-symbol" aria-hidden="true">✳</span><span>CHRISTMAS ATELIER</span></div>
+      <span class="topnote">A LITTLE MAGIC, JUST FOR YOU · ✦</span>
+    </header>
+    <main class="workspace">
+      <section class="sidebar" aria-label="圣诞树自定义设置">
+        <div class="eyebrow">CREATE YOUR OWN CHRISTMAS</div>
+        <h1>把心意，<br>写进一棵圣诞树。</h1>
+        <p class="desc">选喜欢的灯光颜色，写下想说的话。<br>每一颗闪烁的星星，都有你的专属心意。</p>
+        <div class="panel">
+          <div class="panel-section">
+            <div class="section-header"><span class="section-title">✦ 灯光配色</span><span class="helper">点击快速切换</span></div>
+            <div class="presets" id="presets" aria-label="配色预设"></div>
+          </div>
+          <div class="panel-section">
+            <div class="section-header"><span class="section-title">✧ 自由搭配颜色</span><span class="helper">最多 6 种</span></div>
+            <div class="color-list" id="colorList" aria-label="树体粒子颜色"></div>
+            <div class="advanced-grid">
+              <label class="color-row">螺旋灯带 <input class="mini-picker" type="color" id="garlandColor" aria-label="螺旋灯带颜色"></label>
+              <label class="color-row">装饰亮点 <input class="mini-picker" type="color" id="ornamentColor" aria-label="装饰颜色"></label>
+              <label class="color-row">树顶星星 <input class="mini-picker" type="color" id="starColor" aria-label="树顶星星颜色"></label>
+              <label class="color-row">天空底色 <input class="mini-picker" type="color" id="skyColor" aria-label="天空底色"></label>
+            </div>
+          </div>
+          
+          <div class="panel-section">
+            <div class="section-header"><span class="section-title">✺ 树顶与挂件</span><span class="helper">更像专属圣诞树编辑器</span></div>
+            <div class="design-grid">
+              <div class="stack-field">
+                <label class="field-label" for="topperStyle">树顶样式</label>
+                <select class="field-select" id="topperStyle">
+                  <option value="classic">经典五角星</option>
+                  <option value="hollow">空心星</option>
+                  <option value="layered">多层发光星</option>
+                  <option value="snowflake">雪花顶饰</option>
+                  <option value="heart">爱心顶饰</option>
+                  <option value="moon">月亮顶饰</option>
+                  <option value="crown">皇冠顶饰</option>
+                </select>
+              </div>
+              <div class="stack-field">
+                <label class="field-label" for="ornamentStyle">挂件样式</label>
+                <select class="field-select" id="ornamentStyle">
+                  <option value="bauble">圆球挂件</option>
+                  <option value="snowflake">雪花挂件</option>
+                  <option value="gift">小礼盒</option>
+                  <option value="bell">铃铛</option>
+                  <option value="candycane">拐杖糖</option>
+                  <option value="heart">爱心挂件</option>
+                  <option value="custom">自定义图片</option>
+                </select>
+              </div>
+            </div>
+            <div class="slider-block">
+              <div class="slider-header"><label class="field-label" for="garlandDensity">灯条稀疏程度</label><span class="mini-pill" id="garlandDensityValue">100%</span></div>
+              <div class="range-row"><input type="range" id="garlandDensity" min="20" max="140" step="1" value="100"><span class="value-pill">稀 ↔ 密</span></div>
+            </div>
+            <div class="slider-block">
+              <div class="slider-header"><label class="field-label" for="ornamentCount">挂件数量</label><span class="mini-pill" id="ornamentCountValue">210</span></div>
+              <div class="range-row"><input type="range" id="ornamentCount" min="30" max="320" step="1" value="210"><span class="value-pill">少 ↔ 多</span></div>
+            </div>
+            <div class="ornament-upload">
+              <label class="field-label" for="ornamentUpload">自定义挂件图片</label>
+              <div class="upload-row">
+                <div class="upload-thumb empty" id="ornamentPreview" aria-hidden="true"></div>
+                <div class="upload-meta">
+                  <div class="upload-name" id="ornamentUploadName">未上传自定义挂件</div>
+                  <div class="upload-note">建议上传透明 PNG / JPG。选择“自定义图片”后会应用到整棵树。</div>
+                </div>
+              </div>
+              <div class="upload-actions" style="margin-top:10px;">
+                <label class="upload-btn" for="ornamentUpload">上传图片</label>
+                <button type="button" class="clear-btn" id="clearOrnamentUpload">清除图片</button>
+              </div>
+              <input type="file" id="ornamentUpload" accept="image/*" hidden>
+            </div>
+            <div class="tiny-note">提示：挂件颜色仍可通过上方“装饰亮点”颜色控制；如果选择“自定义图片”，导出的视频和图片也会同步保留。</div>
+          </div>
+          <div class="panel-section">
+            <div class="section-header"><span class="section-title">♡ 我想说的话</span><span class="helper">自由编辑</span></div>
+            <textarea id="message" rows="3" maxlength="140" placeholder="写下你想对 TA 说的话…&#10;例如：愿你今年的每一份期待，都有回音。" aria-label="自定义祝福文字"></textarea>
+            <div class="under-textarea">
+              <label class="checkbox-label"><input type="checkbox" id="showMessage" checked> 在画面中显示</label>
+              <span id="charCount" class="helper">0 / 140</span>
+            </div>
+            <div class="settings-grid">
+              <div><label class="field-label" for="messageColor">文字颜色</label><div class="setting-color"><input class="mini-picker" type="color" id="messageColor"><span id="messageColorHex">#E9F7FF</span></div></div>
+              <div><label class="field-label" for="messagePosition">文字位置</label><select class="field-select" id="messagePosition"><option value="bottom">树下居中</option><option value="center">画面中央</option><option value="top">画面上方</option></select></div>
+            </div>
+            <div style="margin-top:13px"><label class="field-label" for="messageSize">文字大小</label><div class="range-row"><input type="range" id="messageSize" min="18" max="52" step="1" value="30"><span class="value-pill" id="sizeValue">30 px</span></div></div>
+          </div>
+          <div class="panel-section">
+            <div class="section-header"><span class="section-title">❄ 动画效果</span><span class="helper" id="motionStatus">正在旋转</span></div>
+            <div class="control-grid"><label><input type="checkbox" id="snowEnabled" checked> 飘雪</label><label><input type="checkbox" id="glowEnabled" checked> 柔光</label><label><input type="checkbox" id="rotateEnabled" checked> 自动旋转</label></div>
+            <div style="margin-top:13px"><label class="field-label" for="rotationSpeed">旋转速度</label><div class="range-row"><input type="range" id="rotationSpeed" min="0" max="100" step="1" value="50"><span class="value-pill" id="speedValue">50%</span></div></div>
+          </div>
+          <div class="panel-section">
+            <div class="section-header"><span class="section-title">▣ 输出尺寸与视频</span><span class="helper">实时适配画面</span></div>
+            <div class="export-grid" id="formatPresets" aria-label="输出尺寸预设"></div>
+            <div class="dimensions">
+              <div><label class="field-label" for="outputWidth">宽度 px</label><input class="number-field" id="outputWidth" type="number" min="320" max="2560" step="2" inputmode="numeric"></div>
+              <span class="dimension-cross">×</span>
+              <div><label class="field-label" for="outputHeight">高度 px</label><input class="number-field" id="outputHeight" type="number" min="320" max="2560" step="2" inputmode="numeric"></div>
+            </div>
+            <label class="safe-note"><input type="checkbox" id="showSafeArea" checked> 显示 IG Story 安全区辅助线（不会导出）</label>
+            <div class="output-hint" id="outputHint">推荐 IG Story：1080 × 1920，9:16。视频时长固定 5 秒。</div>
+            <div class="record-progress" id="recordProgress" role="status" aria-live="polite">
+              <div class="progress-header"><span id="progressLabel">正在录制视频… 请保持页面开启</span><span id="progressPercent">0%</span></div>
+              <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+            </div>
+            <div class="actions">
+              <button type="button" class="btn primary full" id="recordBtn">① 生成 5 秒视频（优先 MP4）</button>
+              <button type="button" class="btn primary full" id="shareBtn" disabled>② 分享到 Instagram Story（手机）</button>
+              <button type="button" class="btn secondary" id="saveVideoBtn" disabled>↓ 下载视频</button>
+              <button type="button" class="btn secondary" id="downloadBtn">↓ 保存 PNG 图片</button>
+              <button type="button" class="btn secondary full" id="resetBtn">↻ 恢复初始设置</button>
+            </div>
+            <div class="share-guide" id="shareGuide" role="status" aria-live="polite"></div>
+          </div>
+        </div>
+        <p class="footnote">在手机浏览器打开 HTTPS 网页，先生成 5 秒视频，再点「分享到 Instagram Story」，即可尝试打开系统分享菜单并选择 Instagram。实际是否显示 Stories 取决于手机和 IG；发布仍需在 Instagram 内确认。</p>
+      </section>
+      <section class="scene-column" aria-label="动态圣诞树预览">
+        <div class="scene-toolbar"><div class="scene-kicker"><span class="live-dot"></span> LIVE PREVIEW</div><span class="scene-status">用颜色与文字，点亮独一无二的圣诞夜</span></div>
+        <div class="scene-shell" id="sceneShell"><canvas id="scene" role="img" aria-label="会旋转、闪烁的彩色粒子圣诞树，包含可自定义祝福"></canvas><div class="safe-overlay" id="safeOverlay"><div class="safe-top">STORY TOP SAFE AREA</div><div class="safe-bottom">STORY BOTTOM SAFE AREA</div></div><div class="scene-label">MERRY LITTLE CHRISTMAS · 2026</div><button class="scene-fullscreen" id="fullscreenBtn" type="button" title="切换全屏" aria-label="切换全屏">⛶</button></div>
+        <div class="preview-footer"><span><strong>SPACE</strong> 暂停 / 继续　 <strong>← →</strong> 调整旋转速度</span><span>可导出 5 秒视频 / PNG · 支持 IG Story 竖屏</span></div>
+      </section>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(() => {
+  'use strict';
+  const W = 1000, H = 800, TWO_PI = Math.PI * 2, MAX_GARLAND = 1800, MAX_ORNAMENTS = 320;
+  const formats = [
+    {id:'story',name:'IG Story',width:1080,height:1920,desc:'9:16 · 推荐'},
+    {id:'post',name:'IG Post',width:1080,height:1350,desc:'4:5 · 竖版'},
+    {id:'square',name:'正方形',width:1080,height:1080,desc:'1:1'},
+    {id:'wide',name:'横屏高清',width:1920,height:1080,desc:'16:9'},
+    {id:'original',name:'原始画幅',width:1000,height:800,desc:'5:4'},
+    {id:'custom',name:'自定义',width:null,height:null,desc:'任意宽高'}
+  ];
+  const presets = [
+    {id:'ice',name:'冰雪蓝',colors:['#87CEEB','#6FC9F3','#CFF5FF'],garland:'#B9F3FF',ornament:'#F5FCFF',star:'#D6F5FF',sky:'#040B21'},
+    {id:'gold',name:'暖金色',colors:['#F7C56C','#FFE5AA','#FFEDD1'],garland:'#FFD38E',ornament:'#FFF5D5',star:'#FFF2BD',sky:'#120D23'},
+    {id:'pink',name:'樱花粉',colors:['#FF91BC','#FFB7D5','#FFD9E6'],garland:'#FFC1E2',ornament:'#FFF4FC',star:'#FFE5F5',sky:'#190D2A'},
+    {id:'aurora',name:'极光色',colors:['#76EAD0','#78C5FF','#A4ADFF','#CBA5F8'],garland:'#8DEDD8',ornament:'#F4ECFF',star:'#D7F8FF',sky:'#07152C'},
+    {id:'violet',name:'薰衣草',colors:['#9B96FF','#C7ACFF','#E3CEFF'],garland:'#D5BDFF',ornament:'#F8EEFF',star:'#E9D9FF',sky:'#100D2E'},
+    {id:'candy',name:'糖果色',colors:['#F49F9B','#FFD17D','#8AE7CF','#A5C7FF'],garland:'#FFE09D',ornament:'#FFF7E7',star:'#FFEDCB',sky:'#0E1630'}
+  ];
+  const baseline = {preset:'ice',colors:[...presets[0].colors],garland:presets[0].garland,ornament:presets[0].ornament,star:presets[0].star,sky:presets[0].sky,topperStyle:'classic',garlandDensity:100,ornamentStyle:'bauble',ornamentCount:210,customOrnamentData:'',message:'',showMessage:true,messageColor:'#E9F7FF',messagePosition:'bottom',messageSize:30,snowEnabled:true,glowEnabled:true,rotateEnabled:true,rotationSpeed:50,format:'story',outputWidth:1080,outputHeight:1920,showSafeArea:true};
+  let state = {...baseline,colors:[...baseline.colors]};
+  try {
+    let stored=null;
+    for (const key of ['christmas-atelier-v2','christmas-atelier-v1']) {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') { stored = parsed; break; }
+    }
+    if (stored) {
+      const s = {...baseline,...stored};
+      if (Array.isArray(s.colors) && s.colors.length >= 1 && s.colors.length <= 6 && s.colors.every(v => /^#[0-9a-f]{6}$/i.test(v))) state = s;
+    }
+  } catch (_) {}
+  const el = id => document.getElementById(id);
+  const canvas = el('scene'), ctx = canvas.getContext('2d',{alpha:false});
+  const particles = [], stars = [], snow = [];
+  let t = 0, lastTime = 0, paused = false, cached = null, toastTimeout;
+  let recording = null, lastVideoFile = null, lastVideoUrl = null, lastPreviewDraw=0;
+  let customOrnamentImage = null, customOrnamentLabel = '';
+  function rng(seed) { return function() { let x = seed += 0x6D2B79F5; x = Math.imul(x ^ x >>> 15,x | 1); x ^= x + Math.imul(x ^ x >>> 7,x | 61); return ((x ^ x >>> 14) >>> 0) / 4294967296; }; }
+  const rand = rng(2026), rnd = (min,max) => min + rand()*(max-min);
+  for (let i=0;i<5000;i++) {
+    const y=.45+Math.pow(rand(),.85)*5.72, base=2.35*(6.17-y)/5.72, a=rand()*TWO_PI;
+    const layer=.92+.10*Math.sin(y*8.2)+.06*Math.cos(a*7+y*4), r=base*layer*(.64+.36*Math.sqrt(rand()));
+    particles.push({x:r*Math.cos(a),y,z:r*Math.sin(a),size:rnd(.75,2.4),phase:rand()*TWO_PI,kind:0,shade:rand()});
+  }
+  for (let i=0;i<MAX_GARLAND;i++) {
+    const y=.55+5.45*i/(MAX_GARLAND-1), a=y*7.7+(i%2)*Math.PI+.10*Math.sin(y*5), r=2.35*(6.17-y)/5.72*(1+.035*Math.sin(y*8));
+    particles.push({x:r*Math.cos(a),y,z:r*Math.sin(a),size:rnd(1.2,3.15),phase:rand()*TWO_PI,kind:1,seq:i,total:MAX_GARLAND});
+  }
+  for (let i=0;i<MAX_ORNAMENTS;i++) {
+    const y=rnd(.65,5.95), a=rand()*TWO_PI, r=2.35*(6.17-y)/5.72*1.018;
+    particles.push({x:r*Math.cos(a),y,z:r*Math.sin(a),size:rnd(1.9,4.3),phase:rand()*TWO_PI,kind:2,seq:i,total:MAX_ORNAMENTS});
+  }
+  for (let i=0;i<220;i++) {
+    const a=rand()*TWO_PI,r=.17*Math.sqrt(rand());
+    particles.push({x:r*Math.cos(a),y:rnd(-.13,.59),z:r*Math.sin(a),size:rnd(.9,1.9),phase:rand()*TWO_PI,kind:3});
+  }
+  for (let i=0;i<145;i++) stars.push({x:rand(),y:rand()*.91,size:rnd(.5,2.05),phase:rand()*TWO_PI});
+  for (let i=0;i<115;i++) snow.push({x:rand(),y:rand(),size:rnd(.8,3.4),speed:rnd(.00045,.00155),phase:rand()*TWO_PI});
+  function rgb(hex) { const h = hex.replace('#','');return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
+  function rgba(a,alpha) { return `rgba(${a[0]},${a[1]},${a[2]},${alpha})`; }
+  function blend(a,b,m) { return [Math.round(a[0]*(1-m)+b[0]*m),Math.round(a[1]*(1-m)+b[1]*m),Math.round(a[2]*(1-m)+b[2]*m)]; }
+  function colorsCached() {
+    if (cached) return cached;
+    cached={tree:state.colors.map(rgb),garland:rgb(state.garland),ornament:rgb(state.ornament),star:rgb(state.star),sky:rgb(state.sky),text:rgb(state.messageColor)};
+    return cached;
+  }
+  function save() { try { localStorage.setItem('christmas-atelier-v2',JSON.stringify(state)); } catch (_) {} cached=null; if(!recording && lastVideoFile){lastVideoFile=null;el('shareBtn').disabled=true;el('saveVideoBtn').disabled=true;el('shareGuide').classList.remove('visible');} }
+  function setCustomOrnamentPreview(data,name=''){ const preview=el('ornamentPreview'); preview.innerHTML=''; preview.classList.toggle('empty',!data); if(data){const img=document.createElement('img');img.src=data;img.alt='';preview.appendChild(img);} el('ornamentUploadName').textContent=data?(name||'已上传自定义挂件'):'未上传自定义挂件'; }
+  function loadCustomOrnamentImage(data,name=''){ customOrnamentLabel=name||customOrnamentLabel||'已上传自定义挂件'; if(!data){ customOrnamentImage=null; customOrnamentLabel=''; setCustomOrnamentPreview('', '未上传自定义挂件'); return; } const img=new Image(); img.onload=()=>{ customOrnamentImage=img; setCustomOrnamentPreview(data, customOrnamentLabel||name||'已上传自定义挂件'); }; img.onerror=()=>{ customOrnamentImage=null; setCustomOrnamentPreview('', '未上传自定义挂件'); }; img.src=data; }
+  function announce(msg) { clearTimeout(toastTimeout);el('toast').textContent=msg;el('toast').classList.add('show');toastTimeout=setTimeout(()=>el('toast').classList.remove('show'),2400); }
+  function renderPresets() {
+    el('presets').innerHTML='';
+    presets.forEach(p => {
+      const b=document.createElement('button');b.type='button';b.className='preset';b.setAttribute('aria-pressed',state.preset===p.id?'true':'false');
+      const sw=document.createElement('div');sw.className='preset-swatch';p.colors.slice(0,4).forEach(c=>{const s=document.createElement('span');s.style.background=c;sw.appendChild(s);});
+      const name=document.createElement('span');name.className='preset-name';name.textContent=p.name;b.append(sw,name);
+      b.addEventListener('click',()=>{Object.assign(state,{preset:p.id,colors:[...p.colors],garland:p.garland,ornament:p.ornament,star:p.star,sky:p.sky});save();syncUI();announce('已切换为「'+p.name+'」');});
+      el('presets').appendChild(b);
+    });
+  }
+  function renderColorChips() {
+    const list=el('colorList');list.innerHTML='';
+    state.colors.forEach((color,i)=>{
+      const outer=document.createElement('div');outer.className='color-chip';
+      const label=document.createElement('label');label.className='color-picker';label.title='调整第 '+(i+1)+' 种树体颜色';
+      const dot=document.createElement('span');dot.className='dot';dot.style.background=color;
+      const input=document.createElement('input');input.type='color';input.value=color;input.setAttribute('aria-label','树体颜色 '+(i+1));
+      input.addEventListener('input',e=>{state.colors[i]=e.target.value;state.preset='custom';dot.style.background=e.target.value;save();updatePresetState();});
+      label.append(dot,input);outer.append(label);
+      if(state.colors.length>1){const rm=document.createElement('button');rm.type='button';rm.className='remove-color';rm.textContent='×';rm.title='删除此颜色';rm.setAttribute('aria-label','删除树体颜色 '+(i+1));rm.addEventListener('click',()=>{state.colors.splice(i,1);state.preset='custom';save();renderColorChips();updatePresetState();});outer.appendChild(rm);}
+      const txt=document.createElement('span');txt.className='chip-label';txt.textContent='颜色 '+(i+1);outer.appendChild(txt);list.appendChild(outer);
+    });
+    const add=document.createElement('button');add.type='button';add.className='add-color';add.textContent='+';add.title='添加一种颜色';add.setAttribute('aria-label','添加树体颜色');add.disabled=state.colors.length>=6;
+    add.addEventListener('click',()=>{if(state.colors.length>=6)return;const options=['#FFD59D','#E6A8FF','#8DE4B6','#FF9DAF','#9AE3FF','#FFF6BA'];state.colors.push(options[(state.colors.length-1)%options.length]);state.preset='custom';save();renderColorChips();updatePresetState();});
+    const wrap=document.createElement('div');wrap.className='color-chip';wrap.appendChild(add);const caption=document.createElement('span');caption.className='chip-label';caption.textContent='添加';wrap.appendChild(caption);list.appendChild(wrap);
+  }
+  function updatePresetState(){Array.from(el('presets').children).forEach((b,i)=>b.setAttribute('aria-pressed',String(state.preset===presets[i].id)));}
+  function syncUI(){
+    renderPresets();renderColorChips();
+    ['garlandColor','ornamentColor','starColor','skyColor','messageColor'].forEach(id=>{const key={garlandColor:'garland',ornamentColor:'ornament',starColor:'star',skyColor:'sky',messageColor:'messageColor'}[id];el(id).value=state[key];});
+    el('topperStyle').value=state.topperStyle;el('ornamentStyle').value=state.ornamentStyle;
+    el('garlandDensity').value=state.garlandDensity;el('ornamentCount').value=state.ornamentCount;
+    el('message').value=state.message;el('showMessage').checked=!!state.showMessage;el('messagePosition').value=state.messagePosition;
+    el('messageSize').value=state.messageSize;el('snowEnabled').checked=!!state.snowEnabled;el('glowEnabled').checked=!!state.glowEnabled;el('rotateEnabled').checked=!!state.rotateEnabled;el('rotationSpeed').value=state.rotationSpeed;
+    el('messageColorHex').textContent=state.messageColor.toUpperCase();el('sizeValue').textContent=state.messageSize+' px';el('speedValue').textContent=state.rotationSpeed+'%';el('charCount').textContent=state.message.length+' / 140';
+    el('garlandDensityValue').textContent=state.garlandDensity+'%';el('ornamentCountValue').textContent=state.ornamentCount;
+    el('motionStatus').textContent=paused?'已暂停':(state.rotateEnabled?'正在旋转':'旋转已关闭');
+    el('showSafeArea').checked=!!state.showSafeArea;
+    setCustomOrnamentPreview(state.customOrnamentData, customOrnamentLabel || '已上传自定义挂件');
+    if(state.customOrnamentData && !customOrnamentImage)loadCustomOrnamentImage(state.customOrnamentData, customOrnamentLabel || '已上传自定义挂件');
+    renderSizePresets();syncDimensions();updateSceneLayout();
+  }
+  [['garlandColor','garland'],['ornamentColor','ornament'],['starColor','star'],['skyColor','sky']].forEach(([id,key])=>el(id).addEventListener('input',e=>{state[key]=e.target.value;state.preset='custom';save();updatePresetState();}));
+  [['topperStyle','topperStyle'],['ornamentStyle','ornamentStyle'],['messagePosition','messagePosition']].forEach(([id,key])=>el(id).addEventListener('change',e=>{state[key]=e.target.value;save();}));
+  el('messageColor').addEventListener('input',e=>{state.messageColor=e.target.value;el('messageColorHex').textContent=e.target.value.toUpperCase();save();});
+  el('message').addEventListener('input',e=>{state.message=e.target.value;el('charCount').textContent=state.message.length+' / 140';save();});
+  ['showMessage','snowEnabled','glowEnabled','rotateEnabled'].forEach(key=>el(key).addEventListener('change',e=>{state[key]=e.target.checked;save();el('motionStatus').textContent=paused?'已暂停':(state.rotateEnabled?'正在旋转':'旋转已关闭');}));
+  el('messageSize').addEventListener('input',e=>{state.messageSize=Number(e.target.value);el('sizeValue').textContent=state.messageSize+' px';save();});
+  el('rotationSpeed').addEventListener('input',e=>{state.rotationSpeed=Number(e.target.value);el('speedValue').textContent=state.rotationSpeed+'%';save();});
+  el('garlandDensity').addEventListener('input',e=>{state.garlandDensity=Number(e.target.value);el('garlandDensityValue').textContent=state.garlandDensity+'%';save();});
+  el('ornamentCount').addEventListener('input',e=>{state.ornamentCount=Number(e.target.value);el('ornamentCountValue').textContent=state.ornamentCount;save();});
+  el('ornamentUpload').addEventListener('change',e=>{const file=e.target.files&&e.target.files[0]; if(!file)return; if(!file.type.startsWith('image/')){announce('请上传图片文件'); return;} const reader=new FileReader(); reader.onload=evt=>{ const src=String(evt.target.result||''); const img=new Image(); img.onload=()=>{ const max=256, scale=Math.min(1,max/Math.max(img.width,img.height)); const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(img.width*scale)); c.height=Math.max(1,Math.round(img.height*scale)); c.getContext('2d').drawImage(img,0,0,c.width,c.height); const data=c.toDataURL('image/png'); state.customOrnamentData=data; customOrnamentLabel=file.name; loadCustomOrnamentImage(data,file.name); state.ornamentStyle='custom'; save(); syncUI(); announce('已上传自定义挂件'); }; img.onerror=()=>announce('图片读取失败，请换一张重试'); img.src=src; }; reader.readAsDataURL(file); e.target.value=''; });
+  el('clearOrnamentUpload').addEventListener('click',()=>{state.customOrnamentData=''; customOrnamentLabel=''; customOrnamentImage=null; if(state.ornamentStyle==='custom')state.ornamentStyle='bauble'; save(); syncUI(); announce('已清除自定义挂件');});
+  el('resetBtn').addEventListener('click',()=>{if(recording)return;state={...baseline,colors:[...baseline.colors]};paused=false;t=0;angle=0;customOrnamentImage=null;customOrnamentLabel='';save();syncUI();announce('已恢复初始冰雪蓝配色与 IG Story 尺寸');});
+  // Size presets and custom dimensions. Dimensions are even for H.264 compatibility.
+  function readDimensions(){return {width:Math.max(320,Math.min(2560,Number(state.outputWidth)||1080)),height:Math.max(320,Math.min(2560,Number(state.outputHeight)||1920))};}
+  function renderSizePresets(){
+    const wrap=el('formatPresets');wrap.innerHTML='';
+    formats.forEach(f=>{const b=document.createElement('button');b.type='button';b.className='size-preset';b.dataset.format=f.id;b.setAttribute('aria-pressed',String(state.format===f.id));
+      const name=document.createElement('span');name.textContent=f.name;const small=document.createElement('small');small.textContent=f.desc;b.append(name,small);
+      b.addEventListener('click',()=>{if(recording)return;state.format=f.id;if(f.width){state.outputWidth=f.width;state.outputHeight=f.height;}save();renderSizePresets();syncDimensions();updateSceneLayout();});wrap.appendChild(b);});
+  }
+  function syncDimensions(){
+    const {width,height}=readDimensions();el('outputWidth').value=width;el('outputHeight').value=height;
+    const ratio=width/height;el('outputHint').textContent=`输出 ${width} × ${height} · ${ratio.toFixed(3)}:1 · 5 秒 / 目标 30fps。${state.format==='story'?'IG Story 推荐尺寸，已提供安全区参考线。':'自适应布局，不裁剪圣诞树。'}`;
+    Array.from(el('formatPresets').children).forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.format===state.format)));
+  }
+  function updateSceneLayout(){
+    const {width,height}=readDimensions(),shell=el('sceneShell'),ratio=width/height;
+    shell.style.aspectRatio=width+' / '+height;
+    const limits=window.innerWidth<=760 ? window.innerWidth-28 : (window.innerWidth<=1090 ? Math.max(260,window.innerWidth-400) : Math.max(340,window.innerWidth-535));
+    const screenHeight=Math.max(360,window.innerHeight-192);
+    const desired=Math.min(1000,limits,screenHeight*ratio);
+    shell.style.width=Math.max(220,desired)+'px';
+    shell.classList.toggle('ig-safe',!!state.showSafeArea && state.format==='story');
+    const full=document.fullscreenElement===shell;if(full)shell.style.width='100vw';
+    resize();
+  }
+  ['outputWidth','outputHeight'].forEach(id=>el(id).addEventListener('change',()=>{
+    if(recording)return;let width=Number(el('outputWidth').value),height=Number(el('outputHeight').value);
+    width=Math.max(320,Math.min(2560,Math.round((width||1080)/2)*2));
+    height=Math.max(320,Math.min(2560,Math.round((height||1920)/2)*2));
+    Object.assign(state,{format:'custom',outputWidth:width,outputHeight:height});save();syncDimensions();updateSceneLayout();
+  }));
+  el('showSafeArea').addEventListener('change',e=>{state.showSafeArea=e.target.checked;save();updateSceneLayout();});
+  window.addEventListener('resize',updateSceneLayout);
+  document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement)updateSceneLayout();});
+  function downloadBlob(blob,filename){
+    const url=URL.createObjectURL(blob),a=document.createElement('a');a.download=filename;a.href=url;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),120000);
+  }
+  el('downloadBtn').addEventListener('click',()=>{
+    if(recording)return;
+    const {width,height}=readDimensions(),exportCanvas=document.createElement('canvas');exportCanvas.width=width;exportCanvas.height=height;
+    drawScene(exportCanvas.getContext('2d',{alpha:false}),width,height);
+    exportCanvas.toBlob(blob=>{if(blob){downloadBlob(blob,`Christmas-Atelier-${width}x${height}.png`);announce('PNG 图片已保存');}else announce('图片导出失败，请重试');},'image/png');
+  });
+  function pickVideoType(){
+    if(typeof MediaRecorder==='undefined')return null;
+    const types=['video/mp4;codecs=avc1.42E01E','video/mp4;codecs=avc1.4D401F','video/mp4','video/webm;codecs=vp8','video/webm;codecs=vp9','video/webm'];
+    return types.find(x=>MediaRecorder.isTypeSupported(x))||null;
+  }
+  function progress(value,text){
+    const v=Math.min(100,Math.max(0,Math.round(value)));el('recordProgress').classList.add('visible');
+    el('progressBar').style.width=v+'%';el('progressPercent').textContent=v+'%';if(text)el('progressLabel').textContent=text;
+  }
+  function finishRecording(){
+    const job=recording;if(!job)return;recording=null;
+    if(job.timer)clearTimeout(job.timer);
+    job.stream.getTracks().forEach(track=>track.stop());paused=job.wasPaused;
+    el('recordBtn').disabled=false;el('resetBtn').disabled=false;
+    el('motionStatus').textContent=paused?'已暂停':(state.rotateEnabled?'正在旋转':'旋转已关闭');
+  }
+  el('recordBtn').addEventListener('click',()=>{
+    if(recording)return;
+    if(!HTMLCanvasElement.prototype.captureStream){announce('浏览器不支持 Canvas 视频录制，请尝试新版 Chrome 或 Safari');return;}
+    const mimeType=pickVideoType();
+    if(!mimeType){announce('当前浏览器不支持视频导出，请尝试新版 Chrome 或 Safari');return;}
+    const {width,height}=readDimensions(),videoCanvas=document.createElement('canvas');
+    videoCanvas.width=width;videoCanvas.height=height;
+    const videoContext=videoCanvas.getContext('2d',{alpha:false});
+    if(!videoContext){announce('无法创建视频画布');return;}
+    drawScene(videoContext,width,height);
+    let stream,recorder;
+    try{
+      stream=videoCanvas.captureStream(30);
+      recorder=new MediaRecorder(stream,{mimeType,videoBitsPerSecond:Math.min(16000000,Math.max(3000000,Math.round(width*height*3.8)))});
+    }catch(err){stream?.getTracks().forEach(track=>track.stop());announce('该设备无法启动视频录制，请尝试其他浏览器');return;}
+    const parts=[],wasPaused=paused;paused=false;
+    lastVideoFile=null;el('shareBtn').disabled=true;el('saveVideoBtn').disabled=true;el('shareGuide').classList.remove('visible');
+    const job={recorder,stream,context:videoContext,canvas:videoCanvas,width,height,start:performance.now(),lastDraw:0,wasPaused,timer:null};
+    recording=job;el('recordBtn').disabled=true;el('resetBtn').disabled=true;progress(0,'正在录制 5 秒视频 · 请保持页面前台');
+    recorder.ondataavailable=e=>{if(e.data && e.data.size>0)parts.push(e.data);};
+    recorder.onerror=()=>{finishRecording();progress(0,'视频编码失败，建议降低分辨率重试');announce('视频录制失败，请重试');};
+    recorder.onstop=()=>{
+      finishRecording();
+      const reported=recorder.mimeType||mimeType,extension=reported.startsWith('video/mp4')?'mp4':'webm';
+      const blob=new Blob(parts,{type:reported});
+      if(blob.size<1500){progress(0,'未生成有效视频，请降低尺寸重试');announce('视频生成失败');return;}
+      const name=`Christmas-Atelier-${width}x${height}-5s.${extension}`;
+      lastVideoFile=new File([blob],name,{type:blob.type});
+      if(lastVideoUrl)URL.revokeObjectURL(lastVideoUrl);
+      lastVideoUrl=URL.createObjectURL(blob);
+      el('shareBtn').disabled=false;
+      el('saveVideoBtn').disabled=false;
+      progress(100,`视频已生成 · ${extension.toUpperCase()} · ${(blob.size/1048576).toFixed(1)} MB`);
+      el('shareGuide').classList.add('visible');
+      el('shareGuide').textContent=extension==='mp4'
+        ? '✓ 5 秒 MP4 已生成。手机上点击「② 分享到 Instagram Story」，在系统分享菜单选择 Instagram / Stories（如出现），即可尝试载入 Story 编辑页；如果没有该选项，可以点击「下载视频」后手动上传。'
+        : '⚠ 本浏览器生成的是 WebM，Instagram 可能不支持。可以点击「下载视频」保存文件，或在支持 MP4 的浏览器重新生成，再上传 Story。';
+      announce(extension==='mp4'?'5 秒 MP4 已生成，可直接尝试分享':'5 秒 WebM 已生成');
+    };
+    try{
+      recorder.start(1000);
+      job.timer=setTimeout(()=>{if(recording===job && recorder.state!=='inactive')recorder.stop();},5025);
+    }catch(err){finishRecording();progress(0,'录制启动失败');announce('录制启动失败，请更换浏览器');}
+  });
+  el('saveVideoBtn').addEventListener('click',()=>{
+    if(!lastVideoFile){announce('请先生成视频');return;}
+    downloadBlob(lastVideoFile,lastVideoFile.name);
+    announce('视频文件已开始下载');
+  });
+  el('shareBtn').addEventListener('click',async()=>{
+    if(!lastVideoFile){announce('请先生成视频');return;}
+    // Web Share API transfers the actual video file; a plain instagram.com link does not.
+    // This must run from a real user tap/click to preserve transient user activation.
+    const options={files:[lastVideoFile],title:'Christmas Atelier · 我的圣诞树'};
+    let canShareFiles=typeof navigator.share==='function';
+    if(canShareFiles && typeof navigator.canShare==='function'){
+      try{canShareFiles=navigator.canShare({files:[lastVideoFile]});}catch(_){canShareFiles=false;}
+    }
+    if(canShareFiles){
+      try{await navigator.share(options);return;}
+      catch(err){if(err && err.name==='AbortError')return;}
+    }
+    el('shareGuide').classList.add('visible');
+    el('shareGuide').textContent='此浏览器或打开方式不支持直接共享视频文件。请先点击「下载视频」，保存至手机相册后打开 Instagram →「+」→「限时动态」。如果是在手机本地打开 HTML，建议先将网页部署到 HTTPS 地址再重试系统分享。';
+    announce('暂无法打开系统分享菜单，请下载视频后上传');
+  });
+  el('fullscreenBtn').addEventListener('click',()=>{const shell=el('sceneShell');if(document.fullscreenElement){document.exitFullscreen?.();}else{shell.requestFullscreen?.().catch(()=>announce('此浏览器暂不支持全屏'));}});
+  document.addEventListener('keydown',e=>{
+    const active=document.activeElement;
+    if(active && ['INPUT','TEXTAREA','SELECT','BUTTON'].includes(active.tagName))return;
+    if(e.code==='Space'){e.preventDefault();paused=!paused;el('motionStatus').textContent=paused?'已暂停':(state.rotateEnabled?'正在旋转':'旋转已关闭');}
+    else if(e.code==='ArrowRight'||e.code==='ArrowLeft'){e.preventDefault();state.rotationSpeed=Math.max(0,Math.min(100,state.rotationSpeed+(e.code==='ArrowRight'?5:-5)));el('rotationSpeed').value=state.rotationSpeed;el('speedValue').textContent=state.rotationSpeed+'%';save();}
+  });
+  function resize(){const rect=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);const width=Math.round(rect.width*dpr),height=Math.round(rect.height*dpr);if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}}
+  if('ResizeObserver' in window)new ResizeObserver(resize).observe(canvas);else window.addEventListener('resize',resize);
+  function circle(c,x,y,r){c.beginPath();c.arc(x,y,r,0,TWO_PI);c.fill();}
+  const spriteCache=new Map();
+  function glowSprite(hex) {
+    if(spriteCache.has(hex))return spriteCache.get(hex);
+    const spr=document.createElement('canvas');spr.width=96;spr.height=96;
+    const g=spr.getContext('2d'),color=rgb(hex),rad=g.createRadialGradient(48,48,0,48,48,48);
+    rad.addColorStop(0,rgba(color,.35));rad.addColorStop(.17,rgba(color,.20));
+    rad.addColorStop(.52,rgba(color,.065));rad.addColorStop(1,rgba(color,0));
+    g.fillStyle=rad;g.fillRect(0,0,96,96);spriteCache.set(hex,spr);return spr;
+  }
+  function starPath(c,x,y,outer,inner){c.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?inner:outer,px=x+Math.cos(a)*r,py=y+Math.sin(a)*r;if(i===0)c.moveTo(px,py);else c.lineTo(px,py);}c.closePath();}
+  function heartPath(c,x,y,size){ c.beginPath(); c.moveTo(x, y+size*.42); c.bezierCurveTo(x-size*.95,y-size*.08,x-size*.62,y-size*.92,x,y-size*.28); c.bezierCurveTo(x+size*.62,y-size*.92,x+size*.95,y-size*.08,x,y+size*.42); c.closePath(); }
+  function moonPath(c,x,y,size){ c.beginPath(); c.arc(x,y,size, -Math.PI*.72, Math.PI*.72, false); c.arc(x+size*.38,y-size*.05,size*.82, Math.PI*.78, -Math.PI*.78, true); c.closePath(); }
+  function crownPath(c,x,y,size){ c.beginPath(); c.moveTo(x-size,y+size*.55); c.lineTo(x-size*.95,y-size*.25); c.lineTo(x-size*.42,y+size*.02); c.lineTo(x-size*.1,y-size*.72); c.lineTo(x+size*.18,y-size*.04); c.lineTo(x+size*.56,y-size*.54); c.lineTo(x+size*.92,y-size*.1); c.lineTo(x+size,y+size*.55); c.closePath(); }
+  function drawSnowflakeShape(c,x,y,size,color,alpha,line=1.7){ c.save(); c.strokeStyle=rgba(color,alpha); c.lineWidth=line; c.lineCap='round'; for(let i=0;i<6;i++){ const a=i*TWO_PI/6; const dx=Math.cos(a)*size, dy=Math.sin(a)*size; c.beginPath(); c.moveTo(x-dx*.15,y-dy*.15); c.lineTo(x+dx,y+dy); c.stroke(); const bx=x+dx*.64, by=y+dy*.64; const side=a+Math.PI/3; c.beginPath(); c.moveTo(bx,by); c.lineTo(bx+Math.cos(side)*size*.24, by+Math.sin(side)*size*.24); c.moveTo(bx,by); c.lineTo(bx+Math.cos(side+Math.PI)*size*.24, by+Math.sin(side+Math.PI)*size*.24); c.stroke(); } c.restore(); }
+  function drawTopper(c,x,y,color){
+    const shimmer=.86+.14*Math.sin(t*2.5), base=15, style=state.topperStyle||'classic';
+    if(state.glowEnabled){ for(let k=5;k>=1;k--){ const rr=base*(1+k*.5)*shimmer; c.fillStyle=rgba(color,Math.max(3,16-k*2)/255); c.strokeStyle=rgba(color,Math.max(6,20-k*2)/255); c.lineWidth=1.2; if(style==='snowflake'){ drawSnowflakeShape(c,x,y,rr*.56,color,Math.max(.07,.22-k*.03),1.3); } else if(style==='heart'){ heartPath(c,x,y,rr*.62); c.fill(); } else if(style==='moon'){ moonPath(c,x,y,rr*.58); c.fill(); } else if(style==='crown'){ crownPath(c,x,y,rr*.65); c.fill(); } else { starPath(c,x,y,rr,rr*(style==='layered'?.36:.46)); if(style==='hollow'){ c.stroke(); } else c.fill(); } } }
+    c.save(); c.strokeStyle=rgba(color,.78); c.lineWidth=1.45;
+    if(style==='classic'){ c.fillStyle=rgba(color,1); starPath(c,x,y,base*shimmer,base*.44*shimmer); c.fill(); c.beginPath(); c.moveTo(x-33,y); c.lineTo(x+33,y); c.moveTo(x,y-33); c.lineTo(x,y+33); c.stroke(); }
+    else if(style==='hollow'){ starPath(c,x,y,base*1.02*shimmer,base*.42*shimmer); c.stroke(); }
+    else if(style==='layered'){ c.fillStyle=rgba(blend(color,[255,255,255],.2),.95); starPath(c,x,y,base*1.08*shimmer,base*.5*shimmer); c.fill(); c.fillStyle=rgba(color,.98); starPath(c,x,y,base*.72*shimmer,base*.28*shimmer); c.fill(); }
+    else if(style==='snowflake'){ drawSnowflakeShape(c,x,y,base*1.18*shimmer,color,.98,2.1); }
+    else if(style==='heart'){ c.fillStyle=rgba(color,.98); heartPath(c,x,y,base*1.05*shimmer); c.fill(); }
+    else if(style==='moon'){ c.fillStyle=rgba(color,.98); moonPath(c,x,y,base*1.02*shimmer); c.fill(); }
+    else if(style==='crown'){ c.fillStyle=rgba(color,.98); crownPath(c,x,y,base*1.04*shimmer); c.fill(); c.beginPath(); c.moveTo(x-base*1.08,y+base*.58); c.lineTo(x+base*1.08,y+base*.58); c.stroke(); }
+    c.restore();
+  }
+  function drawOrnament(c,x,y,size,color,alpha){ const style=state.ornamentStyle||'bauble'; const scale=Math.max(1.3,size*1.15); c.save(); c.lineJoin='round'; c.lineCap='round'; c.strokeStyle=rgba(color,Math.min(1,alpha)); c.fillStyle=rgba(color,Math.min(1,alpha)); c.lineWidth=Math.max(1,scale*.13); c.beginPath(); c.moveTo(x,y-scale*1.1); c.lineTo(x,y-scale*.35); c.stroke(); if(style==='custom' && customOrnamentImage){ const w=scale*2.6,h=scale*2.6*customOrnamentImage.height/customOrnamentImage.width; c.drawImage(customOrnamentImage,x-w/2,y-h/2,w,h); c.restore(); return; } if(style==='snowflake'){ drawSnowflakeShape(c,x,y,scale*.9,color,alpha,Math.max(1.1,scale*.11)); c.restore(); return; } if(style==='gift'){ c.fillRect(x-scale*.75,y-scale*.55,scale*1.5,scale*1.24); c.strokeRect(x-scale*.75,y-scale*.55,scale*1.5,scale*1.24); c.beginPath(); c.moveTo(x,y-scale*.55); c.lineTo(x,y+scale*.69); c.moveTo(x-scale*.75,y+scale*.03); c.lineTo(x+scale*.75,y+scale*.03); c.stroke(); c.beginPath(); c.moveTo(x-scale*.18,y-scale*.55); c.quadraticCurveTo(x-scale*.55,y-scale*.98,x-scale*.02,y-scale*.9); c.moveTo(x+scale*.18,y-scale*.55); c.quadraticCurveTo(x+scale*.55,y-scale*.98,x+scale*.02,y-scale*.9); c.stroke(); c.restore(); return; } if(style==='bell'){ c.beginPath(); c.moveTo(x-scale*.7,y-scale*.18); c.quadraticCurveTo(x,y-scale*1.05,x+scale*.7,y-scale*.18); c.lineTo(x+scale*.52,y+scale*.66); c.quadraticCurveTo(x,y+scale*.92,x-scale*.52,y+scale*.66); c.closePath(); c.fill(); c.beginPath(); c.arc(x,y+scale*.66,scale*.16,0,TWO_PI); c.fillStyle='rgba(255,255,255,.85)'; c.fill(); c.restore(); return; } if(style==='candycane'){ c.strokeStyle=rgba(color,alpha); c.lineWidth=Math.max(2,scale*.28); c.beginPath(); c.moveTo(x,y+scale*.9); c.lineTo(x,y-scale*.22); c.arc(x+scale*.28,y-scale*.22,scale*.28,Math.PI,0,false); c.stroke(); c.strokeStyle='rgba(255,255,255,.78)'; c.lineWidth=Math.max(1.2,scale*.07); for(let i=-2;i<4;i++){ c.beginPath(); c.moveTo(x-scale*.15,y+scale*(.72-i*.24)); c.lineTo(x+scale*.15,y+scale*(.54-i*.24)); c.stroke(); } c.restore(); return; } if(style==='heart'){ c.fillStyle=rgba(color,alpha); heartPath(c,x,y+scale*.1,scale*.84); c.fill(); c.restore(); return; } c.beginPath(); c.arc(x,y,scale*.72,0,TWO_PI); c.fill(); c.fillStyle='rgba(255,255,255,.55)'; c.fillRect(x-scale*.18,y-scale*.95,scale*.36,scale*.18); c.restore(); }
+  function drawSky(c,colors,fw,fh){
+    const bottom=blend(colors.sky,[27,64,100],.22),g=c.createLinearGradient(0,0,0,fh);g.addColorStop(0,rgba(colors.sky,1));g.addColorStop(1,rgba(bottom,1));c.fillStyle=g;c.fillRect(0,0,fw,fh);
+    if(state.glowEnabled){const r=Math.min(fw*.52,fh*.5),cy=fh*(fh>fw*1.25?.48:.5),aura=c.createRadialGradient(fw/2,cy,10,fw/2,cy,r);aura.addColorStop(0,rgba(colors.tree[0],.14));aura.addColorStop(.42,rgba(colors.tree[0],.075));aura.addColorStop(1,rgba(colors.tree[0],0));c.fillStyle=aura;c.fillRect(0,0,fw,fh);}
+  }
+  function drawStars(c,fw,fh){
+    for(const s of stars){const tw=.52+.48*Math.sin(t*.95+s.phase),alpha=(38+120*tw)/255,x=s.x*fw,y=s.y*fh;
+      c.fillStyle=`rgba(203,231,255,${alpha})`;circle(c,x,y,s.size/2);
+      if(s.size>1.7&&tw>.7){c.strokeStyle=`rgba(205,234,255,${.16*tw})`;c.beginPath();c.moveTo(x-4,y);c.lineTo(x+4,y);c.moveTo(x,y-4);c.lineTo(x,y+4);c.stroke();}
+    }
+  }
+  function drawGround(c,colors){
+    const y=658;for(let i=9;i>=0;i--){const rw=225+i*10,rh=28+i*4;c.strokeStyle=rgba(colors.garland,Math.max(1,11-i)/255);c.lineWidth=1;c.beginPath();c.ellipse(500,y+rh*.05,rw,rh/2,0,0,TWO_PI);c.stroke();}
+    c.strokeStyle=rgba(colors.garland,.38);c.beginPath();c.ellipse(500,y,215,17,0,0,TWO_PI);c.stroke();
+    if(state.glowEnabled){const haze=c.createRadialGradient(500,653,5,500,653,195);haze.addColorStop(0,rgba(colors.garland,.095));haze.addColorStop(1,rgba(colors.garland,0));c.fillStyle=haze;c.fillRect(270,620,460,94);}
+  }
+  function drawSnow(c,fw,fh){if(!state.snowEnabled)return;for(const s of snow){let nx=(s.x+Math.sin(t*.43+s.phase)*.018)%1,ny=(s.y+t*s.speed)%1;if(nx<0)nx+=1;c.fillStyle=`rgba(214,241,255,${(75+55*Math.pow(Math.sin(s.phase+1.2),2))/255})`;circle(c,nx*fw,ny*fh,s.size/2);}}
+  function breakMessage(c,msg,maxW,maxLines){
+    const lines=[];const paragraphs=msg.replace(/\r/g,'').split('\n');
+    for(let para of paragraphs){if(!para){lines.push('');continue;}let line='';for(const ch of para){const candidate=line+ch;if(c.measureText(candidate).width>maxW && line){lines.push(line);line=ch;}else line=candidate;}if(line)lines.push(line);}
+    return lines.slice(0,maxLines);
+  }
+  function drawMessage(c,colors,fw,fh){
+    if(!state.showMessage || !state.message.trim())return;
+    const portrait=fh>fw*1.4;
+    let font=Math.max(15,Number(state.messageSize)||30)*(portrait?fw/780:Math.min(fw/1000,fh/800));
+    c.save();c.textAlign='center';c.textBaseline='middle';
+    let lines=[];
+    const safeMax=portrait?fh*.81:fh*.94;
+    const lineCount=4;
+    for(let attempt=0;attempt<26;attempt++){
+      c.font=`${font}px "Songti SC", "Noto Serif CJK SC", "SimSun", Georgia, serif`;
+      lines=breakMessage(c,state.message,fw*.82,100);
+      if(lines.length<=lineCount && font*1.38*(lines.length-1)<fh*.17)break;
+      font-=1.5;if(font<14)break;
+    }
+    lines=lines.slice(0,4);
+    const lineH=font*1.38;
+    let anchor=state.messagePosition==='center'?fh*.5:state.messagePosition==='top'?fh*(portrait?.19:.09):fh*(portrait?.75:.91);
+    if(portrait && state.messagePosition==='bottom')anchor=Math.min(anchor,safeMax-font-lineH*(lines.length-1)/2);
+    const preferred=anchor-(lines.length-1)*lineH/2;
+    const firstY=Math.max(font*.8,Math.min(preferred,fh-font*.9-(lines.length-1)*lineH));
+    c.shadowColor=rgba(colors.text,.38);c.shadowBlur=state.glowEnabled?font*.6:0;c.fillStyle=rgba(colors.text,.98);
+    lines.forEach((line,i)=>c.fillText(line,fw/2,firstY+i*lineH));c.restore();
+  }
+  // Animation time controls twinkle and snowfall; angle controls only the tree rotation.
+  let angle=0;
+  function drawTreeAtAngle(c,colors,forVideo=false){
+    const ca=Math.cos(angle),sa=Math.sin(angle),dots=[],stride=forVideo?2.15:((window.innerWidth<600&&!document.fullscreenElement)?1.35:1);
+    const garlandGlow=glowSprite(state.garland),ornamentGlow=glowSprite(state.ornament);
+    const garlandLimit=Math.max(120,Math.min(MAX_GARLAND,Math.round(1150*(Number(state.garlandDensity)||100)/100)));
+    const ornamentLimit=Math.max(0,Math.min(MAX_ORNAMENTS,Number(state.ornamentCount)||0));
+    for(let i=0;i<particles.length;i+=stride){
+      const p=particles[Math.floor(i)];
+      if(p.kind===1 && p.seq>=garlandLimit)continue;
+      if(p.kind===2 && p.seq>=ornamentLimit)continue;
+      const xx=p.x*ca-p.z*sa,zz=p.x*sa+p.z*ca,pers=10/(10+zz*.23),tw=.67+.33*Math.sin(t*(1+p.size*.24)+p.phase);
+      dots.push({x:500+xx*86*pers,y:400+(3-p.y)*86*pers,z:zz,r:p.size*pers,tw,kind:p.kind,shade:p.shade});
+    }
+    dots.sort((a,b)=>b.z-a.z);
+    for(const p of dots){
+      const size=p.r*(.75+.37*p.tw);
+      if(state.glowEnabled&&(p.kind===2||(p.kind===1&&p.tw>.76))){const gsize=size*(p.kind===2?4.3:2.9);c.drawImage(p.kind===2?ornamentGlow:garlandGlow,p.x-gsize,p.y-gsize,gsize*2,gsize*2);}
+      let color,alpha;
+      if(p.kind===3){color=blend([85,112,135],colors.garland,.48);alpha=(100+100*p.tw)/255; c.fillStyle=rgba(color,Math.min(1,alpha)); circle(c,p.x,p.y,Math.max(.36,size/2));}
+      else if(p.kind===2){color=blend(colors.ornament,[255,255,255],.23);alpha=Math.min(1,(168+85*p.tw)/255);drawOrnament(c,p.x,p.y,Math.max(2,size),color,alpha);}
+      else if(p.kind===1){color=blend(colors.garland,[255,255,255],.2);alpha=(120+125*p.tw)/255; c.fillStyle=rgba(color,Math.min(1,alpha)); circle(c,p.x,p.y,Math.max(.5,size/2));}
+      else{const source=colors.tree[Math.min(colors.tree.length-1,Math.floor(p.shade*colors.tree.length))],depth=Math.max(0,Math.min(1,(p.z+2.6)/5.2));color=blend(source,[255,255,255],.04+p.tw*.11+depth*.055);alpha=(105+125*p.tw)/255; c.fillStyle=rgba(color,Math.min(1,alpha)); circle(c,p.x,p.y,Math.max(.36,size/2));}
+    }
+    drawTopper(c,500,400+(3-6.33)*86,colors.star);
+  }
+  // Adaptive composition: portrait Story, square, portrait post and wide exports all reframe the tree.
+  function drawScene(c,fw=W,fh=H){
+    const colors=colorsCached(),portrait=fh>fw*1.25;
+    c.save();drawSky(c,colors,fw,fh);drawStars(c,fw,fh);
+    const scale=portrait?Math.min(fw/790,fh/1050):Math.min(fw/1000,fh/800);
+    const centerY=fh*(portrait?.48:.5);
+    c.save();c.translate(fw/2,centerY);c.scale(scale,scale);c.translate(-500,-400);
+    drawGround(c,colors);drawTreeAtAngle(c,colors,!!recording && c===recording.context);c.restore();
+    drawSnow(c,fw,fh);drawMessage(c,colors,fw,fh);c.restore();
+  }
+  function loop(now){
+    if(!lastTime)lastTime=now;const delta=Math.min((now-lastTime)/1000,.05);lastTime=now;
+    if(!paused){t+=delta;if(state.rotateEnabled)angle+=delta*(.035+Number(state.rotationSpeed)*.0035);}
+    if(!recording || now-lastPreviewDraw>180){
+      lastPreviewDraw=now;resize();if(canvas.width&&canvas.height){const {width,height}=readDimensions();ctx.setTransform(canvas.width/width,0,0,canvas.height/height,0,0);drawScene(ctx,width,height);}
+    }
+    if(recording && now-recording.lastDraw>=1000/30){
+      recording.lastDraw=now;drawScene(recording.context,recording.width,recording.height);
+      progress((now-recording.start)/50);
+    }
+    requestAnimationFrame(loop);
+  }
+  syncUI();resize();requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
